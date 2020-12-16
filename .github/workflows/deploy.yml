@@ -1,0 +1,32 @@
+name: Deploy to AWS
+
+on:
+  # Let's just keep it to manual triggering for now until all the plumbing is in place
+  workflow_dispatch:
+# push:
+#   branches: [ master ]
+
+env:
+  SSH_USER: ubuntu
+  SSH_HOST: ec2-35-180-156-137.eu-west-3.compute.amazonaws.com
+  OVISBOT_GIT_REPO: "$GITHUB_SERVER_URL/$GITHUB_REPOSITORY"
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Install SSH key
+        uses: shimataro/ssh-key-action@v2
+        with:
+          key: ${{ secrets.EC2_SSH_KEY }}
+          known_hosts: ${{ secrets.EC2_KNOWN_HOSTS }}
+          config: |
+            Host: $SSH_HOST
+              StrictHostKeyChecking no
+
+      - name: SSH to EC2 pull repo and build
+        run: |
+          ssh -t $SSH_USER@$SSH_HOST "sudo rm -rf ovisbot && git clone $OVISBOT_GIT_REPO ovisbot"
+          env | grep OVISBOT > .env && scp .env $SSH_USER@$SSH_HOST:./ovisbot/.env
+          ssh -t $SSH_USER@$SSH_HOST "cd ovisbot && docker-compose up --build -d"
