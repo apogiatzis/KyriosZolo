@@ -1,3 +1,4 @@
+from ovisbot.helpers import chunkify
 import discord
 import io
 import logging
@@ -115,32 +116,10 @@ class Ctf(commands.Cog):
             await ctx.channel.send( "Could not find such event" )
             return
         
-        for writeup in ctf_writeups:
-            info = writeup.__dict__
-
-            embed = discord.Embed(
-                title = info["name"],
-                url = "https://ctftime.org" + info["url"],
-                description=ctf_name,
-                color=0x8cff00
-            )
-            embed.add_field(
-                name = "Points",
-                value = info["points"],
-                inline = True
-            )
-            embed.add_field(
-                name = "Total Writeups",
-                value = info["no_writeups"],
-                inline = True
-            )
-            embed.add_field(
-                name = "Tags",
-                value = info["tags"],
-                inline = False
-            )
-
-            await ctx.channel.send(embed=embed)
+        writeups = '\n'.join(ctf_writeups)
+        writeups = chunkify(writeups, 1700)
+        for chunk in writeups:
+            await ctx.channel.send(chunk)
 
 
     @writeups.error

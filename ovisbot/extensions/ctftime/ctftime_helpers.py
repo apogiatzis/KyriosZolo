@@ -8,6 +8,7 @@ import os
 
 
 from bs4 import BeautifulSoup
+from bs4 import HT
 from dataclasses import dataclass
 
 # Type Hints
@@ -105,20 +106,23 @@ class Event():
         soup = BeautifulSoup(r.text, 'html.parser')
 
         writeups = []
-        all_tr = soup.find_all('tr')[1:]
-        for i in all_tr:
-            url = (i.a).get("href")
-            name = (i.a).get_text()
-            tags = list(map(lambda x: x.get_text(), i.find_all('span')))
-            all_td = i.find_all('td')
-            points = all_td[1].get_text()
-            no_writeups = all_td[-2].get_text()
+        all_tr = soup.find_all('tr')
+        for i in all_tr[1:]:
+            writeup = Writeup()
+            writeup.url = (i.a).get("href")
+            writeup.name = (i.a).get_text()
 
-            writeup = Writeup(name=name, 
-                    points=points,
-                    tags=tags,
-                    no_writeups=no_writeups,
-                    url=url)
+            try:
+                writeup.tags = list(map(lambda x: x.get_text(), i.find_all('span')))
+                all_td = i.find_all('td')
+                if len(all_td) > 1:
+                    writeup.points = all_td[1].get_text()
+                    writeup.no_writeups = int(all_td[-2].get_text())
+            except ValueError:
+                pass
+            except IndexError:
+                pass
+
             writeups.append( writeup )
 
         self.writeups = writeups
