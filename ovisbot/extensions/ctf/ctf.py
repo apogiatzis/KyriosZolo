@@ -59,6 +59,7 @@ CHALLENGE_CATEGORIES = [
     "forensics",
     "osint",
     "htb",
+    "hardware",
 ]
 
 CHALLENGE_DIFFICULTIES = [
@@ -212,7 +213,7 @@ class Ctf(commands.Cog):
             raise ChallengeInvalidDifficulty
 
         challenges = [
-            c for c in ctf.challenges if c.name == channel_name + "-" + challenge_name
+            c for c in ctf.challenges if c.name == challenge_name + "-" + channel_name
         ]
         if len(challenges) > 0:
             raise ChallengeExistsException
@@ -226,7 +227,7 @@ class Ctf(commands.Cog):
         }
         notebook_url = create_corimd_notebook()
         challenge_channel = await ctx.channel.category.create_text_channel(
-            channel_name + "-" + challenge_name, overwrites=overwrites
+            challenge_name + "-" + channel_name, overwrites=overwrites
         )
         new_challenge = Challenge(
             name=challenge_channel.name,
@@ -276,17 +277,18 @@ class Ctf(commands.Cog):
         ctf = CTF.objects.get({"name": channel_name})
 
         challenge_name = challname.lower()
+        chall_name = challenge_name + "-" + channel_name
         challenges = [
-            c for c in ctf.challenges if c.name == channel_name + "-" + challenge_name
+            c for c in ctf.challenges if c.name == chall_name
         ]
         if len(challenges) == 0:
             raise ChallengeDoesNotExistException
 
         challenge_channel = discord.utils.get(
-            ctx.channel.category.channels, name=channel_name + "-" + challenge_name
+            ctx.channel.category.channels, name=chall_name
         )
         for i, c in enumerate(ctf.challenges):
-            if c.name == channel_name + "-" + challenge_name:
+            if c.name == chall_name:
                 del ctf.challenges[i]
                 break
         await challenge_channel.delete()
@@ -410,6 +412,8 @@ class Ctf(commands.Cog):
                 solvers_str, chall_name, reward_text, reward_emoji
             )
         )
+
+        await ctx.channel.edit(name="\N{CHECK MARK}" + chall_name)
         general_channel = discord.utils.get(
             ctx.channel.category.channels, name="general"
         )
